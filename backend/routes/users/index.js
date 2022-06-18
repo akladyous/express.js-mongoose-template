@@ -9,9 +9,3 @@ users.get('/users', usersHome)
 users.all("/users/*", (req, res, next) => {
     res.status(404).json({message: 'path not found'})
 })
-
-
-// export const users = (app) => {
-//     app.route('/users')
-//         .get(usersHome)
-// }
