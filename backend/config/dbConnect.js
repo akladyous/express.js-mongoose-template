@@ -1,16 +1,29 @@
 import mongoose from "mongoose";
 import {DATABASE_URI} from "./env.js"
+const mongooseOptions = {
+    useUnifiedTopology: true,
+    useNewUrlParser: true,
+    maxPoolSize: 10,
+    serverSelectionTimeoutMS: 5000,
+    socketTimeoutMS: 3000,
+}
 
-export const dbConnect = async () => {
-    try {
-        await mongoose.connect(DATABASE_URI, {
-            useUnifiedTopology: true,
-            useNewUrlParser: true,
-            maxPoolSize: 10,
-            serverSelectionTimeoutMS: 3000,
-            socketTimeoutMS: 3000,
-        });
-    } catch (err) {
-        console.error(err);
-    }
-};
+export function dbConnect(cb) {
+    var mongoDB = mongoose.connection;
+    mongoose.connect(DATABASE_URI, mongooseOptions)
+    .catch(error => {
+        console.log('Error connecting to mongoDB : ', error.message);
+        return cb(error)
+    }) 
+    mongoDB.once('connected', () => console.info('mongoDB connected'));
+    mongoDB.on('error', () => {
+        console.log('Error connecting to mongoDB')
+        mongoose.disconnect();
+    });
+    mongoDB.on('disconnected', () => {
+        console.info('mongoDB disconnected')
+        mongoose.connect(DATABASE_URI, mongooseOptions)
+    });
+    mongoDB.on('reconnected', () => console.info('mongoDB reconnected'));
+    return cb(mongoDB)
+}
